@@ -6,6 +6,7 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.net.URL;
 import javax.swing.Timer;
+import javax.swing.border.Border;
 
 public class CreditosPanel extends JPanel {
 
@@ -23,15 +24,31 @@ public class CreditosPanel extends JPanel {
         fondo.setLayout(null); // superposición
         add(fondo, BorderLayout.CENTER);
 
-        // este es el título y tiene efecto de tipeo
-        titulo = new JLabel("", SwingConstants.CENTER);
-        titulo.setFont(new Font("Consolas", Font.BOLD, 28));
-        titulo.setForeground(new Color(0, 255, 100));
-        titulo.setBounds(0, 10, 800, 40);
-        fondo.add(titulo);
-        escribirTextoLento("ARCHIVO RECUPERADO: CRÉDITOS", titulo, 60);
+        
+       titulo = new JLabel("", SwingConstants.CENTER);
+titulo.setFont(getCustomFontAlt(38f));
+titulo.setForeground(new Color(255, 30, 30));
+titulo.setBounds(0, 50, 1000, 60);
+fondo.add(titulo);
 
-       // PANEL CENTRAL CON LOS INTEGRANTES
+// Timer para efecto glitch
+Timer glitchTimer = new Timer(100, null);
+glitchTimer.addActionListener(e -> {
+    // pequeñas desviaciones de posición y color
+    int dx = (int)(Math.random() * 6 - 3); // -3 a 3 px
+    int dy = (int)(Math.random() * 6 - 3);
+    int r = 255;
+    int g = (int)(Math.random() * 50);
+    int b = (int)(Math.random() * 50);
+    titulo.setForeground(new Color(r, g, b));
+    titulo.setLocation(dx, 50 + dy);
+});
+glitchTimer.start();
+
+// efecto de tipeo normal
+escribirTextoLento("(SISTEMA -Acceso a CRÉDITOS habilitado", titulo, 80);
+
+       // PANEL CENTRAL CON LOS INTEGRANTES:3
 JPanel contenido = new JPanel(new FlowLayout(FlowLayout.CENTER, 30, 0)); 
 // FlowLayout centrado y con 30 px de separación entre las tarjetas
 contenido.setOpaque(false);
@@ -118,8 +135,8 @@ JLabel pie = new JLabel(
   + "Prof: Leddy Diana Pájaro<br>"
   + "Monitora: Angélica Baños</html>"
 );
-pie.setFont(new Font("Consolas", Font.PLAIN, 14));
-pie.setForeground(new Color(130, 255, 180));
+getCustomFontAlt(24f);
+pie.setForeground(new Color(255, 30, 30));
 pie.setBounds(560, 460, 480, 70); // coordenadas libres
 panelInferior.add(pie);
 
@@ -139,32 +156,53 @@ panelInferior.add(pie);
         zonaSecreta.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 
         infoSecreta = new JLabel(
-            "<html><b>[ACCESO RESTRINGIDO]</b><br>Proyecto paralelo detectado...<br>Archivo: RAGHAN.EXE</html>"
-        );
-        infoSecreta.setFont(new Font("Consolas", Font.PLAIN, 13));
-        infoSecreta.setForeground(new Color(0, 255, 150));
-        infoSecreta.setOpaque(false);
-        infoSecreta.setVisible(false);
-        infoSecreta.setBounds(200, 70, 400, 80);
+    "<html><b>[ACCESO RESTRINGIDO]</b><br>Proyecto paralelo detectado...<br>Archivo: RAGHAN.EXE</html>"
+);
+infoSecreta.setFont(new Font("Consolas", Font.PLAIN, 13));
+infoSecreta.setForeground(new Color(0, 180, 255));
+infoSecreta.setOpaque(false);
+infoSecreta.setVisible(false);
+infoSecreta.setBounds(200, 70, 400, 80);
 
-        layered.add(zonaSecreta, Integer.valueOf(1));
-        layered.add(infoSecreta, Integer.valueOf(2));
+layered.add(zonaSecreta, Integer.valueOf(1));
+layered.add(infoSecreta, Integer.valueOf(2));
 
-        zonaSecreta.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                infoSecreta.setVisible(true);
-                escribirTextoLento("[ACCESO RESTRINGIDO] Proyecto paralelo detectado... Archivo: RAGHAN.EXE", infoSecreta, 30);
-            }
+zonaSecreta.addMouseListener(new MouseAdapter() {
+    Timer infoGlitch;
 
-            @Override
-            public void mouseExited(MouseEvent e) {
-                infoSecreta.setVisible(false);
-                if (textoTimer != null && textoTimer.isRunning()) {
-                    textoTimer.stop();
-                }
-            }
+    @Override
+    public void mouseEntered(MouseEvent e) {
+        infoSecreta.setVisible(true);
+        escribirTextoLento("[ACCESO RESTRINGIDO] Proyecto paralelo detectado... Archivo: RAGHAN.EXE", infoSecreta, 30);
+
+        // Efecto glitch q cambia color y posición ligeramente
+        infoGlitch = new Timer(120, ev -> {
+            int dx = (int)(Math.random() * 4 - 2); // -2 a 2 px
+            int dy = (int)(Math.random() * 4 - 2);
+            int r = 0;
+            int g = 180; // fij0
+            int b = 200 + (int)(Math.random() * 55);
+            infoSecreta.setForeground(new Color(r, g, b));
+            infoSecreta.setLocation(200 + dx, 70 + dy);
         });
+        infoGlitch.start();
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+        infoSecreta.setVisible(false);
+        if (textoTimer != null && textoTimer.isRunning()) {
+            textoTimer.stop();
+        }
+        if (infoGlitch != null) {
+            infoGlitch.stop();
+        }
+        // restaurar posición y color original
+        infoSecreta.setLocation(200, 70);
+        infoSecreta.setForeground(new Color(0, 180, 255));
+    }
+});
+
     }
 
 // CREAMOS CADA FICHA DE INTEGRANTE
@@ -175,14 +213,28 @@ private JPanel crearRegistro(String nombre, String rol, String imagenRuta, Strin
             super.paintComponent(g);
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(getBackground());
-            g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+            for (int y = 0; y < getHeight(); y++) {
+    for (int x = 0; x < getWidth(); x++) {
+        int brillo = (int)(Math.random() * 20); // puntitos grises
+        g2.setColor(new Color(15+brillo, 15+brillo, 15+brillo));
+        g2.fillRect(x, y, 1, 1);
+    }
+}
             g2.dispose();
         }
     };
     registro.setBackground(new Color(15, 15, 15));
-    registro.setBorder(BorderFactory.createLineBorder(new Color(0, 180, 255), 1));
-    registro.setPreferredSize(new Dimension(210, 280));
+registro.setBackground(new Color(15, 15, 15));
+
+// 🔴🔵 Borde glitch doble (rojo + azul)
+    Border bordeGlitch = BorderFactory.createCompoundBorder(
+    BorderFactory.createLineBorder(new Color(255, 40, 40), 1), // capa externa: rojo
+    BorderFactory.createLineBorder(new Color(0, 180, 255), 2)  // capa interna: azul
+);
+registro.setBorder(bordeGlitch);
+
+registro.setPreferredSize(new Dimension(210, 280));
+
 
     // Imagen circular
     ImageIcon icon = new ImageIcon(getClass().getResource(imagenRuta));
@@ -403,4 +455,26 @@ private JPanel crearTarjeta(String rutaImagen, String nombre, String rol) {
 
     return tarjeta;
 }
+
+// Método para cargar otra fuente pq la que tenía no me gustó
+private Font getCustomFontAlt(float size) {
+    try {
+        Font customFont = Font.createFont(
+            Font.TRUETYPE_FONT,
+            getClass().getResourceAsStream("/fonts/fuente.otf") // cambia el nombre aquí
+        );
+        return customFont.deriveFont(Font.BOLD, size);
+    } catch (Exception e) {
+        System.out.println("No se pudo cargar la segunda fuente, usando Arial.");
+        return new Font("Arial", Font.BOLD, (int) size);
+    }
+}
+
+
+
+
+
+
+
+
 }

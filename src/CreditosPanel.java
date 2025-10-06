@@ -256,7 +256,7 @@ private JPanel crearRegistro(String nombre, String rol, String imagenRuta, Strin
             💬 Frase: "Eche cole."
             """;
     case "Valen" -> """
-            💻 Nombre completo: Valentina Arias Rojas
+            💻 Nombre completo: Valentina Arias Cortez
             🎂 Edad: 17 años
             🎓 Carrera: Ciencia de Datos
             📘 Semestre: 2°
@@ -265,12 +265,12 @@ private JPanel crearRegistro(String nombre, String rol, String imagenRuta, Strin
             💬 Frase: "Quiero una salchipapa."
             """;
     case "Mau" -> """
-            📜 Nombre completo: Mauricio Orozco Restrepo
+            📜 Nombre completo: Mauricio Orozco
             🎂 Edad: 18 años
             🎓 Carrera: Ciencia de Datos
             📘 Semestre: 2°
             🧩 Rol: Documentador
-            🧠 Lenguaje favorito: los chistes malos
+            🧠 Lenguaje favorito: no sé, español(?
             💬 Frase: "Touché."
             """;
     default -> "Información no disponible.";

@@ -71,7 +71,7 @@ public class MenuEstilo extends JFrame {
         JLabel titulo = new JLabel("CYBERSTEAL - THE FIREWALL SAGA");
         try {
             Font customFont = Font.createFont(Font.TRUETYPE_FONT, getClass().getResourceAsStream("/fonts/BadComa.ttf"));
-            customFont = customFont.deriveFont(Font.PLAIN, 39f);
+            customFont = customFont.deriveFont(Font.PLAIN, 41f);
             titulo.setFont(customFont);
             titulo.setOpaque(true);
 
@@ -89,7 +89,7 @@ public class MenuEstilo extends JFrame {
         titulo.setHorizontalAlignment(SwingConstants.CENTER);
         titulo.setOpaque(true); // sólido
         titulo.setBackground(Color.BLACK);
-        titulo.setPreferredSize(new Dimension(800, 100));
+        titulo.setPreferredSize(new Dimension(830, 100));
 
         gbc.gridy = 0;
         gbc.insets = new Insets(30, 1, 50, 0);
@@ -968,7 +968,7 @@ contenido.add(Box.createRigidArea(new Dimension(0, 40)));
             return new Font("Arial", Font.BOLD, (int) size);
         }
     }
-
+   
     //Creamos una subtutina para reproducir el sonido. La música está configurada para sonar en loop hasta que se le de la indicación de terminarse               
     public static void reproducirMusicaFondo(String ruta) {
         try {

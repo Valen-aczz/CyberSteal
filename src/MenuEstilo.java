@@ -20,6 +20,8 @@ public class MenuEstilo extends JFrame {
     private JPanel manualPanel; // Panel de Manual
     private JPanel gamesPanel; //Panel de juego 
     private JPanel tutorialPanel; // Panel de "¿Cómo jugar?"
+    private StoryState storyState = new StoryState(); //acá llevaremos cuenta del avance de los capítulos de los juegos en términos de narrativa.
+
   
     public MenuEstilo() {
         setTitle("Zucaritas");
@@ -46,6 +48,32 @@ public class MenuEstilo extends JFrame {
         setVisible(true);
     }
 
+    
+    
+    
+   public MenuEstilo(StoryState storyState) {
+    this.storyState = storyState;
+    setTitle("Zucaritas");
+    setSize(1000, 600);
+    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    setLocationRelativeTo(null);
+    setResizable(false);
+    setIconImage(new ImageIcon("images/logo.png").getImage());
+
+    // Cursor
+    ImageIcon cursorIcon = new ImageIcon(getClass().getResource("/images/cursor.png"));
+    Image cursorImage = cursorIcon.getImage();
+    Cursor customCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImage, new Point(0, 0), "CursorPersonalizado");
+    this.setCursor(customCursor);
+
+    menuPanel = createMenuPanel();
+    add(menuPanel);
+    setVisible(true);
+}
+
+    
+    
+    
     public JPanel createMenuPanel() {
         
         // Otro panel con un layout absoluto para superponer el fondo y los botones. 
@@ -95,7 +123,7 @@ public class MenuEstilo extends JFrame {
         gbc.insets = new Insets(30, 1, 50, 0);
         contenido.add(titulo, gbc);
 
-        reproducirMusicaFondo("sonidos/down.wav");
+        reproducirMusicaFondo("sonidos/musicaelec.wav");
 
         Cursor miCursor = CursorUtils.crearCursor("/images/cursor.png", 40, 40);
 // Aplicarlo a todo el JFrame
@@ -243,6 +271,8 @@ panel.setComponentZOrder(howToButton, 0);
         if (texto.equals("Salir")) {
             System.exit(0);
         } else if (texto.equals("Créditos")) {
+                   detenerMusicaFondo();
+                    reproducirMusicaFondo("sonidos/down.wav");
             mostrarCreditos();
         } else if (texto.equals("Iniciar juego")) {
             mostrarJuegos();
@@ -341,11 +371,30 @@ private void mostrarCreditos() {
         gamesPanel.setLayout(new BorderLayout());
 
         // Título
-        JLabel titulo = new JLabel("Selecciona tu Misión", SwingConstants.CENTER);
-        titulo.setFont(new Font("Consolas", Font.BOLD, 42));
-        titulo.setForeground(Color.CYAN);
-        titulo.setBorder(BorderFactory.createEmptyBorder(30, 0, 30, 0));
-        gamesPanel.add(titulo, BorderLayout.NORTH);
+JLabel titulo = new JLabel("SELECCIONA TU MISION", SwingConstants.CENTER);
+titulo.setFont(getBadComaFont(50f)); // usamos la fuente personalizada
+titulo.setForeground(Color.RED);
+titulo.setBorder(BorderFactory.createEmptyBorder(30, 0, 30, 0));
+gamesPanel.add(titulo, BorderLayout.NORTH);
+    
+
+
+// Barra de progreso de la historia
+JProgressBar barraProgreso = new JProgressBar(0, 3);
+barraProgreso.setValue(storyState.getCapitulosCompletados());
+barraProgreso.setBounds(300, 100, 400, 20); // x, y, ancho, alto
+barraProgreso.setForeground(new Color(0, 255, 100)); // verde brillante
+barraProgreso.setBackground(Color.DARK_GRAY);
+barraProgreso.setBorderPainted(false);
+barraProgreso.setStringPainted(true); // muestra el texto tipo "2/3"
+barraProgreso.setFont(new Font("Arial", Font.BOLD, 14));
+barraProgreso.setString(storyState.getCapitulosCompletados() + "/3");
+
+gamesPanel.add(barraProgreso);
+
+
+
+
 
         // Panel de juegos
         JPanel juegosContainer = new JPanel(new GridLayout(3, 1, 20, 20));
@@ -420,22 +469,28 @@ private void mostrarCreditos() {
         nombreLabel.setFont(new Font("Verdana", Font.BOLD, 26));
         descripcionArea.setVisible(false);
     }
-
+    
+    
     @Override
-    public void mouseClicked(java.awt.event.MouseEvent e) {
-        reproducirSonido("sonidos/click.wav");
 
-        if (nombre.equals("Lock & Code")) {
-            new minijuego1();
-        } else if (nombre.equals("Phishing for Gold")) {
-            new minijuego2();
-        } else if (nombre.equals("The Zero-Trust")) {
-            new minijuego3();
-        }
+public void mouseClicked(java.awt.event.MouseEvent e) {
+    reproducirSonido("sonidos/click.wav");
 
-       
-        dispose();
+    if (nombre.equals("Lock & Code")) {
+        new minijuego1(storyState);
+    } else if (nombre.equals("The Zero-Trust")) {
+        new minijuego2(storyState);
+    } else if (nombre.equals("Phishing For Gold")) {
+        new minijuego3(storyState);
     }
+
+    dispose();
+}
+
+       //La idea es que sea un diseño modular con progresión narrativa acumulativa 
+       //cada capítulo es independiente (jugable en cualquier orden), 
+       //pero al completarlos en secuencia el jugador desbloquea más capas de historia y ambientación
+     
 });
  
             panelJuego.add(nombreLabel, BorderLayout.NORTH);
@@ -446,11 +501,11 @@ private void mostrarCreditos() {
 
         // Botón de volver
         JButton back = new JButton("← Volver al Menú Principal");
-        back.setFont(new Font("Arial", Font.BOLD, 20));
+        back.setFont(new Font("Arial", Font.BOLD, 22));
         back.setBackground(Color.BLACK);
-        back.setForeground(Color.CYAN);
+        back.setForeground(Color.red);
         back.setFocusPainted(false);
-        back.setBorder(BorderFactory.createLineBorder(Color.CYAN, 2));
+        back.setBorder(BorderFactory.createLineBorder(Color.CYAN, 6));
         back.addActionListener(e -> {
             reproducirSonido("sonidos/click.wav");
             getContentPane().removeAll();
@@ -956,6 +1011,20 @@ contenido.add(Box.createRigidArea(new Dimension(0, 40)));
     
     
     
+    private Font getBadComaFont(float size) {
+    try {
+        Font customFont = Font.createFont(
+            Font.TRUETYPE_FONT,
+            getClass().getResourceAsStream("/fonts/BadComa.ttf") // ruta dentro de resources
+        );
+        return customFont.deriveFont(Font.PLAIN, size);
+    } catch (Exception e) {
+        System.out.println("No se pudo cargar la fuente Bad Coma, usando Arial.");
+        return new Font("Arial", Font.BOLD, (int) size);
+    }
+}
+
+    
     
 
     // Método auxiliar para cargar fuente personalizada
@@ -1098,7 +1167,6 @@ class EscalablePanel extends JPanel {
     setResizable(false);
     setLocationRelativeTo(null);
 }
-
     
 }    
     

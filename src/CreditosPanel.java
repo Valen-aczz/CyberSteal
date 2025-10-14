@@ -122,6 +122,7 @@ backButton.addMouseListener(new java.awt.event.MouseAdapter() {
 backButton.addActionListener(e -> {
     MenuEstilo.reproducirSonido("/sonidos/click.wav");
     volverAlMenu.run(); // vuelve al menú principal
+    MenuEstilo.reproducirMusicaFondo("/sonidos/musicaelec.wav");
 });
 
 // Agregar al fondo
@@ -294,12 +295,12 @@ registro.setPreferredSize(new Dimension(210, 280));
             🎂 Edad: 18 años
             🎓 Carrera: Ciencia de Datos
             📘 Semestre: 2°
-            ☕ Nivel de estrés: 89%
-            🧩 Rol: Líder del equipo
+               Rol: Líder del equipo       
+            ☕ Número favorito: 47cm
             💬 Frase: "Jungkook te amo."
             """;
     case "Karla" -> """
-            🎨 Nombre completo: Karla Sofía Paredes
+            🎨 Nombre completo: Karla Sofía Paredes Rojano
             🎂 Edad: 18 años
             🎓 Carrera: Ciencia de Datos
             📘 Semestre: 2°
@@ -308,7 +309,7 @@ registro.setPreferredSize(new Dimension(210, 280));
             💬 Frase: "Eche cole."
             """;
     case "Valen" -> """
-            💻 Nombre completo: Valentina Arias Cortez
+            💻 Nombre completo: Valentina A.C.
             🎂 Edad: 17 años
             🎓 Carrera: Ciencia de Datos
             📘 Semestre: 2°
@@ -317,7 +318,7 @@ registro.setPreferredSize(new Dimension(210, 280));
             💬 Frase: "Quiero una salchipapa."
             """;
     case "Mau" -> """
-            📜 Nombre completo: Mauricio Orozco
+            📜 Nombre completo: Mauricio José Orozco Porto
             🎂 Edad: 18 años
             🎓 Carrera: Ciencia de Datos
             📘 Semestre: 2°

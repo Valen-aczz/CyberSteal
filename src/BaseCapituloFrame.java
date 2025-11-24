@@ -15,11 +15,11 @@ public abstract class BaseCapituloFrame extends JFrame {
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        // Pantalla casi completa ( o sea maximizada)
+        // Pantalla casi completa ( o sea maximizada pues)
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setResizable(true);
 
-        // Cargar la imagen desde recursos
+        // acá crga la imagen desde los recursos SIGUIENDO la ruta indicada
         URL bgURL = getClass().getResource(rutaFondo.startsWith("/") ? rutaFondo : "/" + rutaFondo);
         if (bgURL == null) {
             System.err.println("❌ No se encontró la imagen de fondo en: " + rutaFondo);
@@ -27,7 +27,7 @@ public abstract class BaseCapituloFrame extends JFrame {
             bgImage = new ImageIcon(bgURL).getImage();
         }
 
-        //  Panel de fondo personalizado
+        // el panel de fondo personalizado
         JPanel backgroundPanel = new JPanel(new BorderLayout()) {
             @Override
             protected void paintComponent(Graphics g) {
@@ -42,7 +42,7 @@ public abstract class BaseCapituloFrame extends JFrame {
 
         backgroundPanel.setOpaque(false);
 
-        // Forzar el coso del repintado cuando la ventana cambia de tamaño
+        // Forzar el repintado cuando la ventana cambia de tamaño
         backgroundPanel.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
@@ -61,7 +61,7 @@ public abstract class BaseCapituloFrame extends JFrame {
         backgroundPanel.add(centerPanel, BorderLayout.CENTER);
         add(backgroundPanel, BorderLayout.CENTER);
 
-  // Forzar repaint tras mostrar ventana
+  // Forzar repaint tras mostrar la ventana
         SwingUtilities.invokeLater(() -> backgroundPanel.repaint());
     }
 
@@ -72,7 +72,7 @@ public abstract class BaseCapituloFrame extends JFrame {
                 ? "¡Has ganado el Capítulo " + capitulo + "!\n¿Qué deseas hacer?"
                 : "Perdiste el Capítulo " + capitulo + ".\nPuedes reintentar, salir o continuar igualmente.";
 
-        String[] opciones = {"Reintentar", "Siguiente Capítulo", "Salir al Menú"};
+        String[] opciones = {"Reintentar", "Siguiente", "Salir al Menú"};
         int eleccion = JOptionPane.showOptionDialog(
                 this,
                 mensaje,
@@ -98,7 +98,12 @@ public abstract class BaseCapituloFrame extends JFrame {
             default:
                 if (victoria) storyState.marcarCapitulo(capitulo, true);
                 dispose();
-                new MenuEstilo(storyState);
+                JFrame ventanaMision = new JFrame("Misiones - CYBERSTEAL");
+ventanaMision.setSize(1000, 700);
+ventanaMision.setLocationRelativeTo(null);
+ventanaMision.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+ventanaMision.setContentPane(new SeleccionMisionPanel(storyState, ventanaMision));
+ventanaMision.setVisible(true);
                 break;
         }
     }

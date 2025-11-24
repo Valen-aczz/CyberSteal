@@ -1,16 +1,27 @@
+// Importa todas las clases y componentes gráficos de Swing
 import javax.swing.*;
+// Importa clases básicas de AWT: colores, fuentes, gráficos, layouts, etc.
 import java.awt.*;
+// Permite trabajar con rutas URL, útil para cargar imágenes, sonidos o recursos externos
 import java.net.URL;
-import java.util.HashMap;
+import java.util.HashMap;// Estructuras de datos tipo mapa, para almacenar información con clave → valor
 import java.util.Map;
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
-import javax.sound.sampled.FloatControl;
+// Librerías para reproducir audio (.wav)
+import javax.sound.sampled.AudioInputStream; // Flujo de datos del audio
+import javax.sound.sampled.AudioSystem;  // Sistema para obtener y gestionar audios
+import javax.sound.sampled.Clip;        // Permite reproducir sonidos cortos (efectos)
+import javax.sound.sampled.FloatControl;// Control de volumen del audio
+// Bordes para componentes gráficos, en este caso permite crear márgenes internos
 import javax.swing.border.EmptyBorder;
+// Permite acceder a funciones del sistema, como iconos, sonidos o recursos del sistema
 import java.awt.Toolkit;
+// Permite modificar el cursor (puntero personalizado)
 import java.awt.Cursor;
 import java.awt.Point;
+// Manejo de eventos, sirve para detectar clics y acciones del usuario
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
 
 public class MenuEstilo extends JFrame {
     static Clip musicaFondo;
@@ -19,17 +30,22 @@ public class MenuEstilo extends JFrame {
     private JPanel creditsPanel; // Panel de créditos
     private JPanel manualPanel; // Panel de Manual
     private JPanel gamesPanel; //Panel de juego 
-    private JPanel tutorialPanel; // Panel de "¿Cómo jugar?"
-    private StoryState storyState = new StoryState(); //acá llevaremos cuenta del avance de los capítulos de los juegos en términos de narrativa.
+    private JPanel tutorialPanel; // Panel de "¿Cómo jugar?" que está en el símbolo de la "i" abajo a la derecha
+    private StoryState storyState = new StoryState(); //acá llevaremos cuenta del avance de los capítulos de los juegos en términos de narrativa y así
+    //Variables que controlan la música
+    private static boolean musicaActivada = true;
+    private static Clip musicaFondoGlobal = null;
+    private static boolean musicaActiva = true;
+    private static Clip musicaActual = null;
 
-  
+    //Se crea el constructor principal
     public MenuEstilo() {
-        setTitle("Zucaritas");
+        setTitle("DENY-ALL");
         setSize(1000, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
-        
+        //Título del juego
         setIconImage(new ImageIcon("images/logo.png").getImage());
 
         // CURSOR PERSONALIZADO
@@ -43,15 +59,16 @@ public class MenuEstilo extends JFrame {
         this.setCursor(customCursor);
 
 
-        menuPanel = createMenuPanel();
+        menuPanel = createMenuPanel(); //Crear el controller principal
         add(menuPanel);
-        setVisible(true);
+        setVisible(true); //hacer visible
     }
 
     
     
     
    public MenuEstilo(StoryState storyState) {
+       //establezco el storystate, que funciona como memoria del juego que conserva el progreso del jugador
     this.storyState = storyState;
     setTitle("Zucaritas");
     setSize(1000, 600);
@@ -65,7 +82,7 @@ public class MenuEstilo extends JFrame {
     Image cursorImage = cursorIcon.getImage();
     Cursor customCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImage, new Point(0, 0), "CursorPersonalizado");
     this.setCursor(customCursor);
-
+//establezco el cursor
     menuPanel = createMenuPanel();
     add(menuPanel);
     setVisible(true);
@@ -146,7 +163,11 @@ public class MenuEstilo extends JFrame {
             label.setPreferredSize(new Dimension(400, 50));
             
             
-          
+   
+            
+            
+            
+            
 
 
 
@@ -175,19 +196,22 @@ soundButton.setContentAreaFilled(false); // transparente
 soundButton.setBounds(920, 440, 50, 40); // x, y, ancho, alto
 
 // funciona para alternar icono y música
+
+
 soundButton.addActionListener(e -> {
-    if (soundButton.getIcon() == soundOnIcon) {
-        soundButton.setIcon(soundOffIcon);
-        if (musicaFondo != null && musicaFondo.isRunning()) {
-            musicaFondo.stop();
-        }
+    MenuEstilo.setMusicaActiva(!MenuEstilo.isMusicaActiva());
+    
+    soundButton.setIcon(MenuEstilo.isMusicaActiva() ? soundOnIcon : soundOffIcon);
+    
+    if (!MenuEstilo.isMusicaActiva()) {
+        // Si se desactiva, detener la música
+        MenuEstilo.detenerMusicaFondo();
     } else {
-        soundButton.setIcon(soundOnIcon);
-        if (musicaFondo != null) {
-            musicaFondo.loop(Clip.LOOP_CONTINUOUSLY);
-        }
+        // Si se activa, volver a reproducir la música
+        reproducirMusicaFondo("sonidos/musicaelec.wav");
     }
 });
+
 
 // Añadir al panel principal
 panel.add(soundButton);
@@ -201,6 +225,8 @@ howToButton.setBackground(Color.BLACK);
 howToButton.setForeground(Color.RED);
 howToButton.setFocusPainted(false);
 howToButton.setBounds(920, 500, 50, 40);
+//Al colocar el cursor sobre el botón, aparece un mensaje que dice "¿Cómo funciona?"
+howToButton.setToolTipText("¿Cómo funciona?");
 howToButton.addActionListener(e -> {
     mostrarManual();
 });
@@ -211,18 +237,21 @@ panel.setComponentZOrder(howToButton, 0);
             
             
             
-//Efectos muy kul
+// Efectos visuales para el label (botón)
       label.addMouseListener(new java.awt.event.MouseAdapter() {
-
+    // Variables para guardar el tamaño original del botón
     int originalWidth;
     int originalHeight;
     int originalX;
     int originalY;
-    boolean sizeSaved = false;
+    boolean sizeSaved = false; // Para evitar guardar los valores más de una vez
 
     @Override
     public void mouseEntered(java.awt.event.MouseEvent e) {
         label.setBackground(new Color(120, 0, 0));
+                // Cambia el fondo cuando el mouse pasa por encima
+                
+                //reproduce el sonido de hover al poner el cursor sobre el  botón
         reproducirSonido("/sonidos/hover.wav");
 
         // Guarda el tamaño y posición solo la primera vez
@@ -234,63 +263,77 @@ panel.setComponentZOrder(howToButton, 0);
             sizeSaved = true;
         }
 
-        // Animación de que crece un poquito
+        // Animación al pasar el mouse: el botón crece un poquito
         new Thread(() -> {
             for (int i = 0; i < 4; i++) {
-                int w = label.getWidth() + 2;
-                int h = label.getHeight() + 1;
+                int w = label.getWidth() + 2;     // Hace el ancho un poco mayor
+                int h = label.getHeight() + 1;    // Hace la altura un poco mayor
+                // Mueve la posición para que crezca hacia afuera y no hacia un solo lado
                 label.setBounds(label.getX() - 1, label.getY() - 1, w, h);
-                try { Thread.sleep(10); } catch (InterruptedException ex) {}
-            }
-        }).start();
-    }
+                
+                                    try {
+                          Thread.sleep(10);
+                      } catch (InterruptedException ex) {
+                      }
+                  }
+              }).start();
+          }
 
-    @Override
-    public void mouseExited(java.awt.event.MouseEvent e) {
-        label.setBackground(Color.BLACK);
-        label.setBounds(originalX, originalY, originalWidth, originalHeight);
-    }
+          @Override
+          public void mouseExited(java.awt.event.MouseEvent e) {
+              label.setBackground(Color.BLACK);
+                      // Cuando se sale del botón, vuelve al tamaño original
+              label.setBounds(originalX, originalY, originalWidth, originalHeight);
+          }
 
-    @Override
+ @Override
     public void mousePressed(java.awt.event.MouseEvent e) {
-        //  se hunde un poco al presionar
+        // Cuando se presiona, el botón se "hunde" un poquito
         label.setLocation(label.getX() + 2, label.getY() + 2);
-        label.setBackground(new Color(80, 0, 0));
+        label.setBackground(new Color(80, 0, 0)); // Se oscurece
     }
 
     @Override
     public void mouseReleased(java.awt.event.MouseEvent e) {
+        //suelta el botón y vuelve a su posición original
         label.setLocation(originalX, originalY);
         label.setBackground(new Color(120, 0, 0));
     }
 
     @Override
     public void mouseClicked(java.awt.event.MouseEvent e) {
+        //sonido al hacer click
         MenuEstilo.reproducirSonido("sonidos/click.wav");
 
+        
+        //Acciones según el texto del botón
         if (texto.equals("Salir")) {
-            System.exit(0);
-        } else if (texto.equals("Créditos")) {
-                   detenerMusicaFondo();
-                    reproducirMusicaFondo("sonidos/down.wav");
-            mostrarCreditos();
+            System.exit(0); //cierra el programa
+      } else if (texto.equals("Créditos")) {
+    MenuEstilo.detenerMusicaFondo(); //abrir el panel de créditos y detener la música
+    if (MenuEstilo.isMusicaActiva()) {
+        reproducirMusicaFondo("sonidos/down.wav"); //reproducir una música distinta en "Créditos"
+    }
+    
+    mostrarCreditos();
         } else if (texto.equals("Iniciar juego")) {
-            mostrarJuegos();
+        dispose(); //"destrute" la ventana actual
+    new SeleccionPersonaje(); //abre una nueva ventana en el menú de selección del personaje
         } else if (texto.equals("¿Cómo jugar?")) {
-            mostrarTutorial();
+            mostrarTutorial(); //mostrar tutorial
         } else {
-            mostrarManual();
+            mostrarManual(); //mostrar manual técnico
         }
     }
 });
-
+// Agrega el label al contenedor con GridBagLayout
             gbc.gridy++;
             contenido.add(label, gbc);
         }
 
-        // agregar contenido de´púes del fondo para que quede arriba
+// Asegura que los botones queden por encima del fondo animado
         panel.add(contenido);
-        panel.setComponentZOrder(contenido, 0); // así aseguramos así que todo quede por encima del GIF
+        panel.setComponentZOrder(contenido, 0); // Lo pone en el primer plano
 
         return panel;
         
@@ -308,22 +351,24 @@ panel.setComponentZOrder(howToButton, 0);
     
     
     
-//Nuevo panel para el menú de créditos
+// Nuevo panel para el menú de créditos
 private void mostrarCreditos() {
-    if (creditsPanel == null) {
+    if (creditsPanel == null) {     // Si el panel de créditos aún no ha sido creado, lo crea
+        // 'CreditosPanel' recibe una función (callback) que se ejecutará cuando el usuario
+        // presione "Volver" o salga de la pantalla de créditos.
+        // Esa función restaura el menú original.
         creditsPanel = new CreditosPanel(() -> {
-            getContentPane().removeAll();
-            add(menuPanel);
+            getContentPane().removeAll();  // Elimina todo lo que esté actualmente en el JFrame
+            add(menuPanel);             // Vuelve a mostrar el panel del menú principal
+            // Actualiza la interfaz para que los cambios se reflejen
             revalidate();
             repaint();
-        });
-    }
-
-    getContentPane().removeAll();
+        });    }
+    getContentPane().removeAll();     // Reemplaza el contenido actual por el panel de créditos
     add(creditsPanel);
-    revalidate();
-    repaint();
-}
+    revalidate();     // Refresca la ventana para que los cambios se muestren
+    repaint(); }
+
 
 
     public static void main(String[] args) {
@@ -336,19 +381,11 @@ private void mostrarCreditos() {
     
 
 
-   
-    
-    
-    
-    
-
      private void mostrarJuegos() {
     if (gamesPanel == null) {
-        // Panel con fondo degradado animado y bonito
+        // Panel con fondo degradado animado y bien bonito
         gamesPanel = new JPanel() {
-            private float hue = 0f;
-
-            {
+            private float hue = 0f;            {
                 // Timer para animar el degradado
                 new javax.swing.Timer(50, e -> {
                     hue += 0.002f;
@@ -356,7 +393,6 @@ private void mostrarCreditos() {
                     repaint();
                 }).start();
             }
-
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
@@ -365,38 +401,26 @@ private void mostrarCreditos() {
                 Color c2 = Color.getHSBColor((hue + 0.2f) % 1, 0.6f, 0.6f);
                 GradientPaint gp = new GradientPaint(0, 0, c1, getWidth(), getHeight(), c2);
                 g2d.setPaint(gp);
-                g2d.fillRect(0, 0, getWidth(), getHeight());
-            }
-        };
+                g2d.fillRect(0, 0, getWidth(), getHeight());            }        };
         gamesPanel.setLayout(new BorderLayout());
-
         // Título
 JLabel titulo = new JLabel("SELECCIONA TU MISION", SwingConstants.CENTER);
 titulo.setFont(getBadComaFont(50f)); // usamos la fuente personalizada
 titulo.setForeground(Color.RED);
 titulo.setBorder(BorderFactory.createEmptyBorder(30, 0, 30, 0));
 gamesPanel.add(titulo, BorderLayout.NORTH);
-    
-
-
-// Barra de progreso de la historia
+    // Barra de progreso de la historia
 JProgressBar barraProgreso = new JProgressBar(0, 3);
 barraProgreso.setValue(storyState.getCapitulosCompletados());
 barraProgreso.setBounds(300, 100, 400, 20); // x, y, ancho, alto
-barraProgreso.setForeground(new Color(0, 255, 100)); // verde brillante
+barraProgreso.setForeground(new Color(0, 255, 100)); // verde creo
 barraProgreso.setBackground(Color.DARK_GRAY);
 barraProgreso.setBorderPainted(false);
-barraProgreso.setStringPainted(true); // muestra el texto tipo "2/3"
+barraProgreso.setStringPainted(true); // muestra el texto tipo así "2/3"
 barraProgreso.setFont(new Font("Arial", Font.BOLD, 14));
 barraProgreso.setString(storyState.getCapitulosCompletados() + "/3");
-
 gamesPanel.add(barraProgreso);
-
-
-
-
-
-        // Panel de juegos
+  // Panel de juegos
         JPanel juegosContainer = new JPanel(new GridLayout(3, 1, 20, 20));
         juegosContainer.setOpaque(false); // transparente para ver el fondo
         juegosContainer.setBorder(BorderFactory.createEmptyBorder(20, 50, 20, 50));
@@ -406,16 +430,16 @@ gamesPanel.add(barraProgreso);
             {"Lock & Code", "Defiende los sistemas del malvado Lord Baldomero.", "rojo", "🔒"},
             {"The Zero-Trust", "Protege con la política de cero confianza.", "amarillo", "🛡"},
             {"Phishing For Gold", "Evita que roben el banco con técnicas de phishing.", "azul", "🐟️"}
-        };
-       
-        
-
+        };        //Matriz de Strings
+// EXPLICACIÓN: Matriz 3x4 (3 filas, 4 columnas) con datos de los juegos
+// CONCEPTO: Matrices        
+// CONCEPTO: Acceso a elementos de matrices con múltiples índice
         for (String[] juego : juegos) {
-            String nombre = juego[0];
-            String descripcion = juego[1];
-            String color = juego[2];
-            String icono = juego[3];
-
+            String nombre = juego[0]; //primera columna
+            String descripcion = juego[1]; //segunda columna
+            String color = juego[2]; //tercera columna
+            String icono = juego[3]; //cuarta columna
+// EXPLICACIÓN: Cada fila es un array, cada columna un índice
             JPanel panelJuego = new JPanel(new BorderLayout()) {
                 @Override
                 protected void paintComponent(Graphics g) {
@@ -443,7 +467,6 @@ gamesPanel.add(barraProgreso);
             descripcionArea.setEditable(false);
             descripcionArea.setVisible(false);
             descripcionArea.setBorder(BorderFactory.createEmptyBorder(5, 20, 10, 20));
-
             // Hover
        panelJuego.addMouseListener(new java.awt.event.MouseAdapter() {
     @Override
@@ -460,7 +483,6 @@ gamesPanel.add(barraProgreso);
         panelJuego.revalidate();
         panelJuego.repaint();
     }
-
     @Override
     public void mouseExited(java.awt.event.MouseEvent e) {
  
@@ -469,8 +491,6 @@ gamesPanel.add(barraProgreso);
         nombreLabel.setFont(new Font("Verdana", Font.BOLD, 26));
         descripcionArea.setVisible(false);
     }
-    
-    
     @Override
 
 public void mouseClicked(java.awt.event.MouseEvent e) {
@@ -483,13 +503,15 @@ public void mouseClicked(java.awt.event.MouseEvent e) {
     } else if (nombre.equals("Phishing For Gold")) {
         new minijuego3(storyState);
     }
-
+    //Este es más simple y no es visible, pero queda aquí por si el que está en la otra clase falla.
     dispose();
 }
+       
 
        //La idea es que sea un diseño modular con progresión narrativa acumulativa 
-       //cada capítulo es independiente (jugable en cualquier orden), 
+       //cada capítulo es independiente (significa que son jugables en cualquier orden), 
        //pero al completarlos en secuencia el jugador desbloquea más capas de historia y ambientación
+//Según yo se entiende la intención
      
 });
  
@@ -533,110 +555,127 @@ public void mouseClicked(java.awt.event.MouseEvent e) {
     revalidate();
     repaint();
 }
+  
    
     
     
-   
-
-
+    
+    
+ 
+    
+    
+   // ============================================================================
+// TUTORIAL PANEL MEJORADO - ESTILO CYBER
+// ============================================================================
 private void mostrarTutorial() {
-    // Permitimos redimensionar en el tutorial para que el usuario pueda maximizar si quiere
     setResizable(true);
 
-    // Contenido principal
-    JPanel contenido = new JPanel();
+    JPanel contenido = new JPanel() {
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2d = (Graphics2D) g;
+            
+            // Fondo degradado oscuro
+            GradientPaint gradient = new GradientPaint(
+                0, 0, new Color(5, 10, 20),
+                getWidth(), getHeight(), new Color(15, 25, 40)
+            );
+            g2d.setPaint(gradient);
+            g2d.fillRect(0, 0, getWidth(), getHeight());
+            
+            // Efecto de grid cyber
+            g2d.setColor(new Color(0, 255, 255, 10));
+            for (int x = 0; x < getWidth(); x += 40) {
+                g2d.drawLine(x, 0, x, getHeight());
+            }
+            for (int y = 0; y < getHeight(); y += 40) {
+                g2d.drawLine(0, y, getWidth(), y);
+            }
+        }
+    };
+    
     contenido.setLayout(new BoxLayout(contenido, BoxLayout.Y_AXIS));
-    contenido.setOpaque(false);
-    contenido.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
-    // Tamaño base ancho x alto, lo hacemos largo para forzar scroll vertical si es necesario
-    contenido.setPreferredSize(new Dimension(1000, 1400)); 
+    contenido.setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 50));
 
-    // Título
-    JLabel titulo = new JLabel("Tutorial de Juegos");
-    titulo.setFont(getCustomFont(34f));
-    titulo.setForeground(Color.WHITE);
+    // ========== HEADER CON TÍTULO ==========
+    JPanel headerPanel = new JPanel();
+    headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
+    headerPanel.setOpaque(false);
+    headerPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+    JLabel titulo = new JLabel("MANUAL DE OPERACIONES");
+    titulo.setFont(getBadComaFont(42f));
+    titulo.setForeground(new Color(0, 255, 255));
     titulo.setAlignmentX(Component.CENTER_ALIGNMENT);
-    contenido.add(titulo);
-    contenido.add(Box.createRigidArea(new Dimension(0, 20)));
 
-    // Juego 1
-    JLabel j1 = new JLabel("Juego #1: \"Lock & Code\"");
-    j1.setFont(new Font("Arial", Font.BOLD, 22));
-    j1.setForeground(Color.YELLOW);
-    j1.setAlignmentX(Component.LEFT_ALIGNMENT);
-    contenido.add(j1);
-    contenido.add(Box.createRigidArea(new Dimension(0, 6)));
+    JLabel subtitulo = new JLabel("[ GUÍA TÁCTICA DE MINIJUEGOS ]");
+    subtitulo.setFont(new Font("Consolas", Font.BOLD, 16));
+    subtitulo.setForeground(new Color(150, 200, 255));
+    subtitulo.setAlignmentX(Component.CENTER_ALIGNMENT);
+    subtitulo.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
 
-    JTextArea desc1 = new JTextArea(
+    headerPanel.add(titulo);
+    headerPanel.add(subtitulo);
+    contenido.add(headerPanel);
+    contenido.add(Box.createRigidArea(new Dimension(0, 30)));
+
+    // ========== JUEGO 1 ==========
+    contenido.add(crearSeccionJuego(
+        "JUEGO #1: LOCK & CODE",
+        new Color(0, 220, 255),
         "En este juego, un villano intentará robar contraseñas de un banco en crisis.\n" +
         "El jugador, en el rol de programador, deberá generar contraseñas cada vez más seguras para evitar el robo.\n\n" +
-        "Conceptos usados:\n" +
+        "CONCEPTOS USADOS:\n" +
         " • Cadenas (strings) → para construir contraseñas con letras, números y símbolos.\n" +
         " • Subrutinas → para generar y validar contraseñas de forma modular.\n" +
         " • Estructuras de control → pausar/avanzar niveles y aumentar la complejidad.\n\n" +
-        "Ejemplo de reto: en cada ronda debes añadir o sustituir caracteres para que la contraseña cumpla\n" +
+        "EJEMPLO DE RETO:\n" +
+        "En cada ronda debes añadir o sustituir caracteres para que la contraseña cumpla\n" +
         "mínimos de longitud, mayúsculas, números y símbolos. Si fallas, el villano roba un fragmento."
-    );
-    configurarTexto(desc1);
-    contenido.add(desc1);
+    ));
 
-    contenido.add(Box.createRigidArea(new Dimension(0, 20)));
+    contenido.add(Box.createRigidArea(new Dimension(0, 25)));
 
-    // Juego 2
-    JLabel j2 = new JLabel("Juego #2: \"The Zero-Trust\"");
-    j2.setFont(new Font("Arial", Font.BOLD, 22));
-    j2.setForeground(Color.CYAN);
-    j2.setAlignmentX(Component.LEFT_ALIGNMENT);
-    contenido.add(j2);
-    contenido.add(Box.createRigidArea(new Dimension(0, 6)));
-
-    JTextArea desc2 = new JTextArea(
+    // ========== JUEGO 2 ==========
+    contenido.add(crearSeccionJuego(
+            "JUEGO #2: THE ZERO-TRUST",
+        new Color(255, 100, 100),
         "Tras la derrota del villano, éste libera un virus en el banco. El jugador debe recorrer la oficina enemiga,\n" +
-        "reunir fragmentos y ensamblar una \"vacuna\" que defenderá la infraestructura.\n\n" +
-        "Conceptos usados:\n" +
+        "reunir fragmentos y ensamblar una 'vacuna' que defenderá la infraestructura.\n\n" +
+        "CONCEPTOS USADOS:\n" +
         " • Cadenas → pistas y mensajes ocultos que debes interpretar.\n" +
         " • Vectores y matrices → inventario y mapas donde aparecen objetos clave.\n" +
         " • Subrutinas → etapas como explorar, abrir archivos y descifrar códigos.\n" +
         " • Funciones → validar elecciones y determinar si estás más cerca de la vacuna.\n\n" +
-        "Tips: inspecciona archivos, compara fragmentos y guarda progresos entre niveles."
-    );
-    configurarTexto(desc2);
-    contenido.add(desc2);
+        " TIPS:\n" +
+        "Inspecciona archivos, compara fragmentos y guarda progresos entre niveles."
+    ));
 
-    contenido.add(Box.createRigidArea(new Dimension(0, 20)));
+    contenido.add(Box.createRigidArea(new Dimension(0, 25)));
 
-    // Juego 3
-    JLabel j3 = new JLabel("Juego #3: \"Phishing for Gold\"");
-    j3.setFont(new Font("Arial", Font.BOLD, 22));
-    j3.setForeground(Color.ORANGE);
-    j3.setAlignmentX(Component.LEFT_ALIGNMENT);
-    contenido.add(j3);
-    contenido.add(Box.createRigidArea(new Dimension(0, 6)));
-
-    JTextArea desc3 = new JTextArea(
+    // ========== JUEGO 3 ==========
+    contenido.add(crearSeccionJuego(
+        "JUEGO #3: PHISHING FOR GOLD",
+        new Color(255, 220, 0),
         "Ahora, convertido en directivo del banco, debes identificar mensajes dañinos disfrazados de correos legítimos.\n" +
         "Detectarás intentos de phishing aplicando reglas y consejos ofrecidos al inicio de cada nivel.\n\n" +
-        "Conceptos usados:\n" +
+        "CONCEPTOS USADOS:\n" +
         " • Cadenas → análisis de remitentes, enlaces y textos.\n" +
         " • Matrices / vectores → almacenar y clasificar mensajes por riesgo.\n" +
         " • Condicionales → reglas que deciden si un mensaje es seguro o falso.\n" +
         " • Funciones → llevar control de aciertos y errores para calcular tu puntuación.\n\n" +
-        "Consejo: revisa encabezados, enlaces sospechosos y errores de ortografía: suelen delatar fraudes."
-    );
-    configurarTexto(desc3);
-    contenido.add(desc3);
+        "CONSEJO:\n" +
+        "Revisa encabezados, enlaces sospechosos y errores de ortografía: suelen delatar fraudes."
+    ));
 
-    // espacio extra para que el botón no quede pegado al final
-    contenido.add(Box.createRigidArea(new Dimension(0, 18)));
+    contenido.add(Box.createRigidArea(new Dimension(0, 30)));
 
-    // --- Botón de volver
-    JButton backButton = new JButton("← Volver al Menú");
-    backButton.setFont(new Font("Arial", Font.BOLD, 20));
-    backButton.setPreferredSize(new Dimension(260, 60));
-    backButton.setMaximumSize(new Dimension(260, 60));
+    // ========== BOTÓN VOLVER ==========
+    JButton backButton = crearBotonCyber("← VOLVER AL MENÚ", new Color(50, 100, 150));
     backButton.setAlignmentX(Component.CENTER_ALIGNMENT);
     backButton.addActionListener(e -> {
-        // Volver al menú y restaurar comportamiento fijo
+        MenuEstilo.reproducirSonido("/sonidos/click.wav");
         getContentPane().removeAll();
         getContentPane().add(menuPanel);
         setSize(1000, 600);
@@ -646,333 +685,320 @@ private void mostrarTutorial() {
         repaint();
     });
 
-    // Agregamos el botón antes de un espaciador grande para que quede más arriba.
     contenido.add(backButton);
+    contenido.add(Box.createRigidArea(new Dimension(0, 30)));
 
-    // Espacio final largo para que si el panel se muestra completo el botón no quede pegado abajo.
-    contenido.add(Box.createRigidArea(new Dimension(0, 300)));
-
-    //centrar
-    JPanel centerWrapper = new JPanel(new GridBagLayout());
-    centerWrapper.setOpaque(false);
-    centerWrapper.add(contenido);
-
-    JScrollPane scrollPane = new JScrollPane(centerWrapper);
+    // ========== SCROLL PANE ==========
+    JScrollPane scrollPane = new JScrollPane(contenido);
     scrollPane.setBorder(null);
-    scrollPane.getViewport().setBackground(Color.BLACK);
-    scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.getViewport().setOpaque(false);
+    scrollPane.setOpaque(false);
+    scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
     scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
-    // Mostrar en la ventana
     getContentPane().removeAll();
     getContentPane().add(scrollPane);
-    setSize(1000, 600);
+    setSize(1000, 650);
     setLocationRelativeTo(null);
     revalidate();
     repaint();
 }
 
-// Auxiliar
-private void configurarTexto(JTextArea area) {
-    area.setFont(new Font("Arial", Font.PLAIN, 16));
-    area.setForeground(Color.WHITE);
-    area.setOpaque(false);
-    area.setLineWrap(true);
-    area.setWrapStyleWord(true);
-    area.setEditable(false);
-    area.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
-    area.setAlignmentX(Component.LEFT_ALIGNMENT);
-    // que la caja pueda crecer en alto pero no exceder el ancho base
-    area.setMaximumSize(new Dimension(1000, Short.MAX_VALUE));
-    area.setPreferredSize(new Dimension(1000, 120)); // hint inicial por bloque
+// ============================================================================
+// MÉTODO AUXILIAR PARA CREAR LAS SECCIONES DE JUEGOS
+// ============================================================================
+private JPanel crearSeccionJuego(String titulo, Color colorTema, String contenido) {
+    JPanel panel = new JPanel() {
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            
+            // Fondo con gradiente
+            GradientPaint gradient = new GradientPaint(
+                0, 0, new Color(20, 25, 40, 200),
+                getWidth(), getHeight(), new Color(30, 35, 50, 180)
+            );
+            g2d.setPaint(gradient);
+            g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+            
+            // Borde con efecto glow
+            g2d.setColor(new Color(colorTema.getRed(), colorTema.getGreen(), colorTema.getBlue(), 100));
+            g2d.setStroke(new BasicStroke(3f));
+            g2d.drawRoundRect(1, 1, getWidth()-2, getHeight()-2, 15, 15);
+        }
+    };
+    
+    panel.setLayout(new BorderLayout(10, 10));
+    panel.setOpaque(false);
+    panel.setBorder(BorderFactory.createEmptyBorder(20, 25, 20, 25));
+
+    // Título de la sección
+    JLabel lblTitulo = new JLabel(titulo);
+    lblTitulo.setFont(new Font("Consolas", Font.BOLD, 22));
+    lblTitulo.setForeground(colorTema);
+
+    // Contenido de texto
+    JTextArea areaTexto = new JTextArea(contenido);
+    areaTexto.setFont(new Font("Consolas", Font.PLAIN, 14));
+    areaTexto.setForeground(new Color(220, 220, 240));
+    areaTexto.setOpaque(false);
+    areaTexto.setLineWrap(true);
+    areaTexto.setWrapStyleWord(true);
+    areaTexto.setEditable(false);
+
+    panel.add(lblTitulo, BorderLayout.NORTH);
+    panel.add(areaTexto, BorderLayout.CENTER);
+
+    return panel;
 }
 
-
-
-
-
-
-    private void mostrarManual() {
+// ============================================================================
+// MANUAL TÉCNICO QUE ESTÁ EN LA "i"
+// ============================================================================
+private void mostrarManual() {
     if (manualPanel == null) {
-        // Panel principal donde guardaremos el scroll
-        manualPanel = new JPanel(new BorderLayout());
-        manualPanel.setBackground(Color.BLACK);
+        manualPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                
+                // Fondo degradado cyber
+                GradientPaint gradient = new GradientPaint(
+                    0, 0, new Color(5, 10, 20),
+                    getWidth(), getHeight(), new Color(20, 30, 50)
+                );
+                g2d.setPaint(gradient);
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+                
+                // Grid de fondo
+                g2d.setColor(new Color(0, 255, 255, 8));
+                for (int x = 0; x < getWidth(); x += 50) {
+                    g2d.drawLine(x, 0, x, getHeight());
+                }
+                for (int y = 0; y < getHeight(); y += 50) {
+                    g2d.drawLine(0, y, getWidth(), y);
+                }
+            }
+        };
+        manualPanel.setLayout(new BorderLayout());
 
-        //Contenido
+        // ========== CONTENIDO ==========
         JPanel contenido = new JPanel();
         contenido.setLayout(new BoxLayout(contenido, BoxLayout.Y_AXIS));
         contenido.setOpaque(false);
-        contenido.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
-contenido.setMaximumSize(new Dimension(1000, Integer.MAX_VALUE));
+        contenido.setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 50));
 
-        // Título
-        JLabel titulo = new JLabel("Manual técnico del código");
-        titulo.setFont(getCustomFont(30f));
-        titulo.setForeground(Color.WHITE);
+        // ENCABEZADO
+        JLabel titulo = new JLabel("MANUAL TECNICO DEL SISTEMA");
+        titulo.setFont(getBadComaFont(38f));
+        titulo.setForeground(new Color(0, 255, 255));
         titulo.setAlignmentX(Component.CENTER_ALIGNMENT);
+        
+        JLabel subtitulo = new JLabel("[ ARQUITECTURA Y FUNCIONAMIENTO ]");
+        subtitulo.setFont(new Font("Consolas", Font.BOLD, 14));
+        subtitulo.setForeground(new Color(150, 200, 255));
+        subtitulo.setAlignmentX(Component.CENTER_ALIGNMENT);
+        subtitulo.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
+
         contenido.add(titulo);
-        contenido.add(Box.createRigidArea(new Dimension(0, 18)));
+        contenido.add(subtitulo);
+        contenido.add(Box.createRigidArea(new Dimension(0, 25)));
 
-        // --- Sección: Resumen general ---
-        JLabel sResumen = new JLabel("Resumen general");
-        sResumen.setFont(new Font("Arial", Font.BOLD, 20));
-        sResumen.setForeground(Color.YELLOW);
-        sResumen.setAlignmentX(Component.LEFT_ALIGNMENT);
-        contenido.add(sResumen);
-        contenido.add(Box.createRigidArea(new Dimension(0, 6)));
-
-        JTextArea resumen = new JTextArea(
-            "Esta clase se llama`MenuEstilo` e implementa un menú principal para seleccionar varios mini-juegos. " +
+        // SECCIONES TÉCNICAS
+        agregarSeccionTecnica(contenido, "Resumen General", 
+            "Esta clase se llama `MenuEstilo` e implementa un menú principal para seleccionar varios mini-juegos. " +
             "Usa Swing para la UI, `Clip`/`AudioSystem` para audio, y varios paneles " +
-            "(menu, créditos, juegos, tutorial, manual). El patrón usado es perezoso, " +
-            "esto significa cada subpanel se crea solo la primera vez que se necesita (if == null)."
-        );
-        configurarTexto(resumen);
-        contenido.add(resumen);
-        contenido.add(Box.createRigidArea(new Dimension(0, 14)));
+            "(menu, créditos, juegos, tutorial, manual). El patrón usado es perezoso (lazy initialization), " +
+            "esto significa cada subpanel se crea solo la primera vez que se necesita (if == null).");
 
-        // --- Sección: Imports y recursos ---
-        JLabel sImports = new JLabel("Imports y recursos");
-        sImports.setFont(new Font("Arial", Font.BOLD, 20));
-        sImports.setForeground(Color.CYAN);
-        sImports.setAlignmentX(Component.LEFT_ALIGNMENT);
-        contenido.add(sImports);
-        contenido.add(Box.createRigidArea(new Dimension(0, 6)));
+        agregarSeccionTecnica(contenido, "Imports y Recursos",
+            "• javax.swing / java.awt: componentes gráficos, layouts, eventos.\n" +
+            "• javax.sound.sampled: para cargar y reproducir clips (AudioInputStream, Clip, FloatControl).\n" +
+            "• Recursos no java (fuentes, imágenes y sonidos) se obtienen vía getResource(...) para funcionar dentro de la clase.\n" +
+            "• Esta parte se hizo desde el explorador de archivos del computador, no desde NetBeans, cargando los recursos requeridos dentro de la carpeta resources.");
 
-        JTextArea imports = new JTextArea(
-            "- `javax.swing` / `java.awt`: componentes gráficos, layouts, eventos.\n" +
-            "- `javax.sound.sampled`: para cargar y reproducir clips (`AudioInputStream`, `Clip`, `FloatControl`).\n" +
-            "- Recursos no java (fuentes, imágenes y sonidos) se obtienen vía `getResource(...)` para funcionar dentro de la clase.\n" +
-            "Esta parte se hizo desde el explorador de archivos del computador, no desde netbeans, cargando los recursos requeridos dentro de la carpeta \n" +
-            "resources, que sigue esta ruta: (NetBeansProjects\\LABORATORIO\\MenuEstilo\\src\\main\\resources)\n\n"     
-        );
-        configurarTexto(imports);
-        contenido.add(imports);
-        contenido.add(Box.createRigidArea(new Dimension(0, 14)));
+        agregarSeccionTecnica(contenido, "Sistema de Audio",
+            "• AudioSystem.getAudioInputStream(...) abre el stream desde recursos.\n" +
+            "• Clip se abre (clip.open(audioIn)), se controla el volumen con FloatControl y se inicia con start() o loop(...).\n" +
+            "• Manejo de errores: se capturan excepciones y se muestran mensajes con JOptionPane o se imprime el stacktrace.\n" +
+            "• Buenas prácticas: cerrar clips (clip.close()) cuando terminan y usar LineListener para liberar recursos.");
 
-        // --- Sección: Campos estáticos y mapas ---
-        JLabel sCampos = new JLabel("Campos estáticos y mapas");
-        sCampos.setFont(new Font("Arial", Font.BOLD, 20));
-        sCampos.setForeground(Color.CYAN);
-        sCampos.setAlignmentX(Component.LEFT_ALIGNMENT);
-        contenido.add(sCampos);
-        contenido.add(Box.createRigidArea(new Dimension(0, 6)));
+        agregarSeccionTecnica(contenido, "Funcionamiento de los Juegos",
+            "Juego #1: Lock & Code\n" +
+            "• Cadenas (strings): se implementan como variables que almacenan contraseñas.\n" +
+            "• Subrutinas: funciones que generan contraseñas y otras que las validan.\n" +
+            "• Estructuras de control: se usan para pausar, avanzar niveles y aumentar complejidad.\n\n" +
+            
+            "Juego #2: The Zero-Trust\n" +
+            "• Cadenas: guardan mensajes ocultos y pistas.\n" +
+            "• Vectores y matrices: almacenan inventarios y mapas.\n" +
+            "• Subrutinas: dividen el juego en etapas.\n\n" +
+            
+            "Juego #3: Phishing for Gold\n" +
+            "• Cadenas: se usan para analizar remitentes y enlaces.\n" +
+            "• Matrices y vectores: almacenan mensajes y clasificación.\n" +
+            "• Condicionales: determinan si un mensaje es seguro o falso.");
 
-        JTextArea campos = new JTextArea(
-            "- `static Clip musicaFondo;` : clip global para la música de fondo. Se abre, se ajusta volumen con `FloatControl` \n" +
-            "y se reproduce en loop hasta poner el comando que lo detiene." +       
-            "- `static Map<String, Clip> efectosSonido` : este mapa está pensado para cachear efectos y evitar recargas repetidas.\n" +
-                "Nota: Cachear es básicamente guardar algo que ya cargaste para no tener que volver a cargarlo.\n\n"
-        );
-        configurarTexto(campos);
-        contenido.add(campos);
-        contenido.add(Box.createRigidArea(new Dimension(0, 14)));
+        contenido.add(Box.createRigidArea(new Dimension(0, 25)));
 
-        // --- Sección: Constructor (inicialización del JFrame) ---
-        JLabel sConstructor = new JLabel("Constructor (inicialización del JFrame)");
-        sConstructor.setFont(new Font("Arial", Font.BOLD, 20));
-        sConstructor.setForeground(Color.ORANGE);
-        sConstructor.setAlignmentX(Component.LEFT_ALIGNMENT);
-        contenido.add(sConstructor);
-        contenido.add(Box.createRigidArea(new Dimension(0, 6)));
+        // BOTÓN VOLVER
+        JButton back = crearBotonCyber("← VOLVER AL MENÚ", new Color(50, 100, 150));
+        back.setAlignmentX(Component.CENTER_ALIGNMENT);
+        back.addActionListener(e -> {
+            MenuEstilo.reproducirSonido("/sonidos/click.wav");
+            getContentPane().removeAll();
+            getContentPane().add(menuPanel);
+            setSize(1000, 600);
+            setResizable(false);
+            setLocationRelativeTo(null);
+            revalidate();
+            repaint();
+        });
 
-        JTextArea constructorTxt = new JTextArea(
-            "- `setTitle`, `setSize`, `setDefaultCloseOperation`, `setLocationRelativeTo(null)`: para la configuración básica del frame.\n" +
-            "- `setResizable(false)` en el menú principal: impide redimensionado (el tutorial y el manual son las únicas excepciones).\n" +
-            "- Cursor personalizado: se cargó la imagen con `getResource` y se creó con `Toolkit.createCustomCursor(...)`.\n" +
-            "- `menuPanel = createMenuPanel(); add(menuPanel); setVisible(true);` : se muestra el menú principal."
-        );
-        configurarTexto(constructorTxt);
-        contenido.add(constructorTxt);
-        contenido.add(Box.createRigidArea(new Dimension(0, 14)));
+        contenido.add(back);
+        contenido.add(Box.createRigidArea(new Dimension(0, 30)));
 
-        // --- Sección: createMenuPanel (estructura y comportamiento) ---
-        JLabel sMenu = new JLabel("createMenuPanel() — Estructura y comportamiento");
-        sMenu.setFont(new Font("Arial", Font.BOLD, 20));
-        sMenu.setForeground(Color.ORANGE);
-        sMenu.setAlignmentX(Component.LEFT_ALIGNMENT);
-        contenido.add(sMenu);
-        contenido.add(Box.createRigidArea(new Dimension(0, 6)));
-
-        JTextArea menuTxt = new JTextArea(
-            "- Se usa `JPanel(null)` (layout absoluto) para poder colocar el GIF de fondo con coordenadas fijas y superponer un contenido transparente.\n" +
-            "- `fondoGif` (JLabel con ImageIcon) se coloca primero, luego se añade `contenido` y se fuerza su orden para que quede encima.\n" +
-            "- `contenido` usa `GridBagLayout` para centrar título y los botones; cada botón es un `JLabel` con `MouseListener` para efectos de sonido de hover y click.\n" +
-            "- Manejo de eventos: `mouseEntered` cambia color; `mouseClicked` reproduce sonidos y llama a métodos como `mostrarTutorial()` o `mostrarCreditos()`."
-        );
-        configurarTexto(menuTxt);
-        contenido.add(menuTxt);
-        contenido.add(Box.createRigidArea(new Dimension(0, 14)));
-
-        // --- Sección: Patrones en mostrarX (lazy init y volver) ---
-        JLabel sLazy = new JLabel("Patrón: creación perezosa en mostrarX()");
-        sLazy.setFont(new Font("Arial", Font.BOLD, 20));
-        sLazy.setForeground(Color.YELLOW);
-        sLazy.setAlignmentX(Component.LEFT_ALIGNMENT);
-        contenido.add(sLazy);
-        contenido.add(Box.createRigidArea(new Dimension(0, 6)));
-
-        JTextArea lazyTxt = new JTextArea(
-            "- Cada método `mostrarCreditos()`, `mostrarJuegos()` o `mostrarTutorial()` verifica `if (panel == null)` y crea el panel solo la primera vez.\n" +
-            "- Esto ahorra memoria y tiempo de inicio. Al volver, se hace `getContentPane().removeAll(); add(menuPanel); revalidate(); repaint();`."
-        );
-        configurarTexto(lazyTxt);
-        contenido.add(lazyTxt);
-        contenido.add(Box.createRigidArea(new Dimension(0, 14)));
-
-        // --- Sección: Audio (reproducirMusicaFondo / reproducirSonido) ---
-        JLabel sAudio = new JLabel("Audio: reproducirMusicaFondo(), reproducirSonido()");
-        sAudio.setFont(new Font("Arial", Font.BOLD, 20));
-        sAudio.setForeground(Color.CYAN);
-        sAudio.setAlignmentX(Component.LEFT_ALIGNMENT);
-        contenido.add(sAudio);
-        contenido.add(Box.createRigidArea(new Dimension(0, 6)));
-
-        JTextArea audioTxt = new JTextArea(
-            "- `AudioSystem.getAudioInputStream(...)` abre el stream desde recursos.\n" +
-            "- `Clip` se abre (`clip.open(audioIn)`), se controla el volumen con `FloatControl` y se inicia con `start()` o `loop(...)`.\n" +
-            "- Manejo de errores: se capturan excepciones y se muestran mensajes con `JOptionPane` o se imprime el stacktrace.\n" +
-            "- Buenas prácticas: cerrar clips (`clip.close()`) cuando terminan y usar `LineListener` para liberar recursos."
-        );
-        configurarTexto(audioTxt);
-        contenido.add(audioTxt);
-        contenido.add(Box.createRigidArea(new Dimension(0, 14)));
-
-        // --- Sección: CursorUtils ---
-        JLabel sCursor = new JLabel("CursorUtils (crearCursor)");
-        sCursor.setFont(new Font("Arial", Font.BOLD, 20));
-        sCursor.setForeground(Color.ORANGE);
-        sCursor.setAlignmentX(Component.LEFT_ALIGNMENT);
-        contenido.add(sCursor);
-        contenido.add(Box.createRigidArea(new Dimension(0, 6)));
-
-        JTextArea cursorTxt = new JTextArea(
-            "- Método utilitario que carga una imagen desde recursos y la redimensiona con `getScaledInstance`.\n" +
-            "- Crea un cursor con `Toolkit.createCustomCursor(image, new Point(0,0), name)`.\n" +
-            "- Si falla, retorna `Cursor.getDefaultCursor()` (fallback seguro)."
-        );
-        configurarTexto(cursorTxt);
-        contenido.add(cursorTxt);
-        contenido.add(Box.createRigidArea(new Dimension(0, 14)));
-
-        // --- Sección: EscalablePanel (explicación técnica) ---
-        JLabel sEscalable = new JLabel("EscalablePanel (paintComponent override)");
-        sEscalable.setFont(new Font("Arial", Font.BOLD, 20));
-        sEscalable.setForeground(Color.CYAN);
-        sEscalable.setAlignmentX(Component.LEFT_ALIGNMENT);
-        contenido.add(sEscalable);
-        contenido.add(Box.createRigidArea(new Dimension(0, 6)));
-
-        JTextArea escalableTxt = new JTextArea(
-            "- `EscalablePanel extends JPanel` contiene un contenido que se coloca con `setLayout(null)`.\n" +
-            "- En `paintComponent(Graphics g)` se calcula una `scale = min(currentW/baseW, currentH/baseH)` para mantener la proporción.\n" +
-            "- Se calcula el nuevo tamaño `newW = baseW * scale`, `newH = baseH * scale` y se centra con offsets `(x,y)`.\n" +
-            "- Finalmente se llama `contenido.setBounds(x,y,newW,newH)` para que todo el panel siguiente se redimensione como una sola unidad.\n" +
-            "- Así se logra que el panel haga zoom proporcionalmente sin deformar sus elementos para que no se vea feo."
-        );
-        configurarTexto(escalableTxt);
-        contenido.add(escalableTxt);
-        contenido.add(Box.createRigidArea(new Dimension(0, 18)));
-
-        // --- Funcionamiento de los juegos (usa exactamente tus textos) ---
-        JLabel sJuegos = new JLabel("Funcionamiento de los juegos (idea)");
-        sJuegos.setFont(new Font("Arial", Font.BOLD, 20));
-        sJuegos.setForeground(Color.PINK);
-        sJuegos.setAlignmentX(Component.LEFT_ALIGNMENT);
-        contenido.add(sJuegos);
-        contenido.add(Box.createRigidArea(new Dimension(0, 6)));
-
-        // --- Bloque Juego 1
-JTextArea juego1Txt = new JTextArea(
-    "Juego #1: Lock & Code\n" +
-    "   - Cadenas (strings): se implementan como variables que almacenan contraseñas. El jugador modifica estas cadenas agregando o sustituyendo caracteres.\n" +
-    "   - Subrutinas: funciones que generan contraseñas y otras que las validan de forma modular.\n" +
-    "   - Estructuras de control: se usan para pausar, avanzar niveles y aumentar la complejidad.\n" +
-    "   - Funcionamiento: en cada ronda el sistema llama a una subrutina de validación que revisa longitud, uso de mayúsculas, números y símbolos.\n" +
-    "     Si la validación retorna “falso”, una variable de control indica que el villano roba un fragmento.\n\n"
-);
-configurarTexto(juego1Txt);
-contenido.add(juego1Txt);
-
-// --- Bloque Juego 2 ---
-JTextArea juego2Txt = new JTextArea(
-    "Juego #2: The Zero-Trust\n" +
-    "   - Cadenas: guardan mensajes ocultos y pistas que el jugador interpreta.\n" +
-    "   - Vectores y matrices: almacenan inventarios y mapas con objetos clave.\n" +
-    "   - Subrutinas: dividen el juego en etapas como explorar, abrir archivos o descifrar códigos.\n" +
-    "   - Funciones: procesan las elecciones y devuelven si acercan o alejan al objetivo de la vacuna.\n" +
-    "   - Funcionamiento: cada acción ejecuta funciones que trabajan con datos de vectores/matrices y cadenas de texto.\n" +
-    "     El progreso se guarda en variables que se actualizan entre niveles.\n\n"
-);
-configurarTexto(juego2Txt);
-contenido.add(juego2Txt);
-
-// --- Bloque Juego 3 -
-JTextArea juego3Txt = new JTextArea(
-    "Juego #3: Phishing for Gold\n" +
-    "   - Cadenas: se usan para analizar remitentes, enlaces y textos de correos electrónicos.\n" +
-    "   - Matrices y vectores: almacenan los mensajes y los clasifican según riesgo.\n" +
-    "   - Condicionales: reglas que determinan si un mensaje es seguro o falso.\n" +
-    "   - Funciones: registran aciertos y errores para calcular la puntuación.\n" +
-    "   - Funcionamiento: cada mensaje se recorre en un vector y pasa por condicionales que validan encabezados y enlaces.\n" +
-    "     Una función lleva el conteo de resultados y actualiza la puntuación del jugador.\n\n"
-            );
-configurarTexto(juego3Txt);
-contenido.add(juego3Txt);
-
-JTextArea nota = new JTextArea(
-    "📌 Nota: estos funcionamientos son propuestas de diseño; los juegos aún no están implementados.\n" +
-    "   Posiblemente se agregue algo extra en el proceso.\n\n"
-);
-configurarTexto(nota);
-contenido.add(nota);
-
-
-// volver
-JButton back = new JButton("← Volver al Menú");
-back.setFont(new Font("Arial", Font.BOLD, 20));
-back.setPreferredSize(new Dimension(260, 60));
-back.setMaximumSize(new Dimension(260, 60));
-back.setAlignmentX(Component.CENTER_ALIGNMENT);
-back.addActionListener(e -> {
-    getContentPane().removeAll();
-    getContentPane().add(menuPanel);
-    setSize(1000, 600);
-    setResizable(false);
-    setLocationRelativeTo(null);
-    revalidate();
-    repaint();
-});
-
-contenido.add(Box.createRigidArea(new Dimension(0, 30)));
-contenido.add(back);
-contenido.add(Box.createRigidArea(new Dimension(0, 40)));
-
-        // Centrar contenido
-        JPanel centerWrapper = new JPanel(new GridBagLayout());
-        centerWrapper.setOpaque(false);
-        centerWrapper.add(contenido);
-
-        JScrollPane scroll = new JScrollPane(centerWrapper);
+        // SCROLL PANE
+        JScrollPane scroll = new JScrollPane(contenido);
         scroll.setBorder(null);
-        scroll.getViewport().setBackground(Color.BLACK);
+        scroll.getViewport().setOpaque(false);
+        scroll.setOpaque(false);
         scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        scroll.getVerticalScrollBar().setUnitIncrement(16); // scroll más suave
+        scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scroll.getVerticalScrollBar().setUnitIncrement(16);
 
         manualPanel.add(scroll, BorderLayout.CENTER);
     }
 
-    // Mostrar manual
     getContentPane().removeAll();
     getContentPane().add(manualPanel);
-    setSize(1000, 600);
+    setSize(1000, 650);
     setResizable(true);
     setLocationRelativeTo(null);
     revalidate();
     repaint();
 }
 
+// ============================================================================
+// MÉTODO AUXILIAR PARA SECCIONES TÉCNICAS
+// ============================================================================
+private void agregarSeccionTecnica(JPanel contenedor, String titulo, String texto) {
+    JPanel seccion = new JPanel() {
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            
+            g2d.setColor(new Color(25, 30, 45, 200));
+            g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
+            
+            g2d.setColor(new Color(0, 200, 255, 120));
+            g2d.setStroke(new BasicStroke(2f));
+            g2d.drawRoundRect(1, 1, getWidth()-2, getHeight()-2, 12, 12);
+        }
+    };
+    
+    seccion.setLayout(new BorderLayout(10, 10));
+    seccion.setOpaque(false);
+    seccion.setBorder(BorderFactory.createEmptyBorder(18, 22, 18, 22));
+
+    JLabel lblTitulo = new JLabel(titulo);
+    lblTitulo.setFont(new Font("Consolas", Font.BOLD, 18));
+    lblTitulo.setForeground(new Color(0, 255, 200));
+
+    JTextArea areaTexto = new JTextArea(texto);
+    areaTexto.setFont(new Font("Consolas", Font.PLAIN, 13));
+    areaTexto.setForeground(new Color(220, 220, 240));
+    areaTexto.setOpaque(false);
+    areaTexto.setLineWrap(true);
+    areaTexto.setWrapStyleWord(true);
+    areaTexto.setEditable(false);
+
+    seccion.add(lblTitulo, BorderLayout.NORTH);
+    seccion.add(areaTexto, BorderLayout.CENTER);
+
+    contenedor.add(seccion);
+    contenedor.add(Box.createRigidArea(new Dimension(0, 18)));
+}
+
+// ============================================================================
+// BOTÓN CYBER REUTILIZABLE
+// ============================================================================
+private JButton crearBotonCyber(String texto, Color colorBase) {
+    JButton btn = new JButton(texto) {
+        private boolean hover = false;
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            Color c1 = hover ? colorBase.brighter() : colorBase;
+            Color c2 = hover ? colorBase : colorBase.darker();
+            
+            GradientPaint gradient = new GradientPaint(0, 0, c1, getWidth(), getHeight(), c2);
+            g2d.setPaint(gradient);
+            g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+
+            if (hover) {
+                g2d.setColor(new Color(0, 255, 255, 100));
+                g2d.setStroke(new BasicStroke(3f));
+                g2d.drawRoundRect(0, 0, getWidth()-1, getHeight()-1, 20, 20);
+            }
+            
+            g2d.setColor(new Color(0, 200, 255));
+            g2d.setStroke(new BasicStroke(2f));
+            g2d.drawRoundRect(2, 2, getWidth()-4, getHeight()-4, 20, 20);
+
+            // Texto con sombra
+            g2d.setColor(new Color(0, 0, 0, 150));
+            g2d.setFont(getFont());
+            FontMetrics fm = g2d.getFontMetrics();
+            int x = (getWidth() - fm.stringWidth(getText())) / 2;
+            int y = (getHeight() - fm.getHeight()) / 2 + fm.getAscent();
+            g2d.drawString(getText(), x+2, y+2);
+            
+            g2d.setColor(Color.WHITE);
+            g2d.drawString(getText(), x, y);
+        }
+    };
+
+    btn.setFont(new Font("Consolas", Font.BOLD, 16));
+    btn.setPreferredSize(new Dimension(300, 50));
+    btn.setMaximumSize(new Dimension(300, 50));
+    btn.setContentAreaFilled(false);
+    btn.setFocusPainted(false);
+    btn.setBorderPainted(false);
+
+    btn.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            MenuEstilo.reproducirSonido("/sonidos/hover.wav");
+            try {
+                java.lang.reflect.Field hoverField = btn.getClass().getDeclaredField("hover");
+                hoverField.setAccessible(true);
+                hoverField.set(btn, true);
+            } catch (Exception ex) { }
+            btn.repaint();
+        }
+
+        @Override
+        public void mouseExited(java.awt.event.MouseEvent e) {
+            try {
+                java.lang.reflect.Field hoverField = btn.getClass().getDeclaredField("hover");
+                hoverField.setAccessible(true);
+                hoverField.set(btn, false);
+            } catch (Exception ex) { }
+            btn.repaint();
+        }
+    });
+    return btn;
+}
     
     
 
@@ -1001,14 +1027,12 @@ contenido.add(Box.createRigidArea(new Dimension(0, 40)));
     
     
     
-    
-    
-    
-    
-    
-    
-    
-    
+// -------------- Abajo dejé varios de los Method importantes para no confundirme ---------------    
+   
+
+
+
+
     
     
     private Font getBadComaFont(float size) {
@@ -1019,10 +1043,10 @@ contenido.add(Box.createRigidArea(new Dimension(0, 40)));
         );
         return customFont.deriveFont(Font.PLAIN, size);
     } catch (Exception e) {
-        System.out.println("No se pudo cargar la fuente Bad Coma, usando Arial.");
+        System.out.println("No se pudo cargar la fuente Bad Coma, estamos usando Arial.");
         return new Font("Arial", Font.BOLD, (int) size);
     }
-}
+} //cambia a arial si la fuente falla.
 
     
     
@@ -1040,6 +1064,7 @@ contenido.add(Box.createRigidArea(new Dimension(0, 40)));
    
     //Creamos una subtutina para reproducir el sonido. La música está configurada para sonar en loop hasta que se le de la indicación de terminarse               
     public static void reproducirMusicaFondo(String ruta) {
+            if (!musicaActiva) return;
         try {
             detenerMusicaFondo();
 
@@ -1167,6 +1192,21 @@ class EscalablePanel extends JPanel {
     setResizable(false);
     setLocationRelativeTo(null);
 }
+    
+    
+    
+    public static boolean isMusicaActiva() {
+        return musicaActiva;
+    }
+    
+    public static void setMusicaActiva(boolean activa) {
+        musicaActiva = activa;
+    }
+    
+    public static void setMusicaActual(Clip clip) {
+        musicaActual = clip;
+    }
+   
     
 }    
     
